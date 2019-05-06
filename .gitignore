@@ -1,0 +1,9 @@
+# ignore all zips
+*.zip
+
+# ignore the huge training folder
+train_color/
+train_label/
+
+# ignore the large training folder
+test/
