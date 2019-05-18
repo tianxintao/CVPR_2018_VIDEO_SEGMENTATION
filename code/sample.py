@@ -18,7 +18,6 @@ test_images = np.array(sorted(os.listdir(test_dir)))
 def SampleImagesAndLabels(size,save = False, showTrain = False, showLabel = False):
     indexArray = np.random.randint(0,len(train_images)-1,size)
     selectedImages = train_images[indexArray]
-    selectedLables = [imgName.replace('.jpg','_instanceIds.png',1) for imgName in selectedImages]
     
 #    selectedImagesPath = [train_color_dir+"/"+imgName for imgName in selectedImages]
 #    selectedLabelPath = [train_label_dir+"/"+labelName for labelName in selectedLables]
