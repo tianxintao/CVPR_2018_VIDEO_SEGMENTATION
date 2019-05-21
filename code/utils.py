@@ -4,22 +4,22 @@ import numpy as np
 import os
 from matplotlib import pyplot as plt
 
-sampledTrainFolderPath = '../train_color_sample/'
-sampledLabelFolderPath = '../train_label_sample/'
-
-train_images = np.array(sorted(os.listdir(sampledTrainFolderPath)))
-train_labels = np.array(sorted(os.listdir(sampledLabelFolderPath)))
-
-
-trainPic = imread(sampledTrainFolderPath+train_images[0]) 
-labelPic = imread(sampledLabelFolderPath+train_labels[0])
-imgHeight = labelPic.shape[0]
-imgWidth = labelPic.shape[1]
-
-imshow(trainPic)
-show()
-imshow(labelPic)
-show()
+#sampledTrainFolderPath = '../train_color_sample/'
+#sampledLabelFolderPath = '../train_label_sample/'
+#
+#train_images = np.array(sorted(os.listdir(sampledTrainFolderPath)))
+#train_labels = np.array(sorted(os.listdir(sampledLabelFolderPath)))
+#
+#
+#trainPic = imread(sampledTrainFolderPath+train_images[0]) 
+#labelPic = imread(sampledLabelFolderPath+train_labels[0])
+#imgHeight = labelPic.shape[0]
+#imgWidth = labelPic.shape[1]
+#
+#imshow(trainPic)
+#show()
+#imshow(labelPic)
+#show()
 
 def CreateIndexMap():
     # Construct a dictionary
