@@ -3,31 +3,30 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 from torchsummary import summary
-
+from dataloader import VideoSegmentationDataset
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
+torch.cuda.empty_cache() 
 # Hyper parameters
 num_epochs = 5
-num_classes = 10
+num_classes = 35
 batch_size = 100
-learning_rate = 0.001
+learning_rate = 0.003
 
 ## MNIST dataset
-#train_dataset = torchvision.datasets.MNIST(root='../data/',
-#                                           train=True, 
-#                                           transform=transforms.ToTensor(),
-#                                           download=True)
-#
+sampledTrainFolderPath = '../train_color_sample/'
+sampledLabelFolderPath = '../train_label_sample/'
+train_dataset = VideoSegmentationDataset(sampledTrainFolderPath,
+                                sampledLabelFolderPath)
+
 #test_dataset = torchvision.datasets.MNIST(root='../data/',
 #                                          train=False, 
 #                                          transform=transforms.ToTensor())
 #
 ## Data loader
-#train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-#                                           batch_size=batch_size, 
-#                                           shuffle=True)
-#
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
+                                           batch_size=batch_size)
+
 #test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
 #                                          batch_size=batch_size, 
 #                                          shuffle=False)
@@ -37,55 +36,55 @@ learning_rate = 0.001
 #print(train_dataset.data[0].shape)
 # Convolutional neural network (two convolutional layers)
 class FCN(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, num_classes=35):
         super(FCN, self).__init__()
         
         self.layer1 = nn.Sequential(
-            nn.Conv2d(3, 96, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(96),
+            nn.Conv2d(3, 48, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(48),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2))
         
         self.layer2 = nn.Sequential(
-            nn.Conv2d(96, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(48, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2))
         
         self.layer3 = nn.Sequential(
-            nn.Conv2d(256, 384, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(384),
+            nn.Conv2d(128, 192, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2))
         
         self.layer4 = nn.Sequential(
-            nn.Conv2d(384, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(512),
+            nn.Conv2d(192, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2))
         
         self.layer5 = nn.Sequential(
-            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(512),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2))
         
         self.layer6 = nn.Sequential(
-            nn.Conv2d(512, 1024, kernel_size=7, stride=1, padding=1),
-            nn.BatchNorm2d(1024),
+            nn.Conv2d(256, 448, kernel_size=7, stride=1, padding=1),
+            nn.BatchNorm2d(512),
             nn.ReLU())
         
         self.layer7 = nn.Sequential(
-            nn.Conv2d(1024, 1024, kernel_size=1, stride=1, padding=1),
-            nn.BatchNorm2d(1024),
+            nn.Conv2d(378, 378, kernel_size=1, stride=1, padding=1),
+            nn.BatchNorm2d(378),
             nn.ReLU())
 
 #        self.fc = nn.Linear(7*7*32, num_classes)
         self.score_fr = nn.Sequential(
-                nn.Conv2d(1024,35,kernel_size=1,padding=0))
+                nn.Conv2d(378,35,kernel_size=1,padding=0))
         
         self.upsampling = nn.Sequential(
-                nn.ConvTranspose2d(35,35,kernel_size=,stride=)))
+                nn.ConvTranspose2d(35,35,kernel_size=32,stride=64))
         
     def forward(self, x):
         out = self.layer1(x)
@@ -101,7 +100,7 @@ class FCN(nn.Module):
         out = self.upsampling(out)
         return out
 
-model = FCN(num_classes).to(device)
+model = FCN().to(device)
 print(summary(model,(3,1024,1024)))
 
 
@@ -129,21 +128,21 @@ for epoch in range(num_epochs):
             print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                    .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
 
-# Test the model
-model.eval()  # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
-with torch.no_grad():
-    correct = 0
-    total = 0
-    for images, labels in test_loader:
-        images = images.to(device)
-        labels = labels.to(device)
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-    print('Test Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
-
-# Save the model checkpoint
-torch.save(model.state_dict(), 'model.ckpt')# -*- coding: utf-8 -*-
+## Test the model
+#model.eval()  # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
+#with torch.no_grad():
+#    correct = 0
+#    total = 0
+#    for images, labels in test_loader:
+#        images = images.to(device)
+#        labels = labels.to(device)
+#        outputs = model(images)
+#        _, predicted = torch.max(outputs.data, 1)
+#        total += labels.size(0)
+#        correct += (predicted == labels).sum().item()
+#
+#    print('Test Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
+#
+## Save the model checkpoint
+#torch.save(model.state_dict(), 'model.ckpt')# -*- coding: utf-8 -*-
 
