@@ -11,8 +11,8 @@ train_images = np.array(sorted(os.listdir(sampledTrainFolderPath)))
 train_labels = np.array(sorted(os.listdir(sampledLabelFolderPath)))
 
 
-trainPic = imread(sampledTrainFolderPath+train_images[2]) 
-labelPic = imread(sampledLabelFolderPath+train_labels[2])
+trainPic = imread(sampledTrainFolderPath+train_images[0]) 
+labelPic = imread(sampledLabelFolderPath+train_labels[0])
 imgHeight = labelPic.shape[0]
 imgWidth = labelPic.shape[1]
 
@@ -58,10 +58,10 @@ labelmap = {0:'others',
             167:'bus_group', 
             168:'tricycle_group'}
 
-indexMap = labelmap.copy()
+indexMap = dict()
 index = 0
-for key,value in indexMap.items():
-    indexMap[key] = index
+for key,value in labelmap.items():
+    indexMap[index] = (key,value)
     index = index+1
     
 numOfClasses = str(len(labelmap))
@@ -70,9 +70,11 @@ print("The output has " + str(len(labelmap)) + " channels")
 # The output would be a (35,2710,3384) vector
 def ConvertLabelImage(imgArr,numOfClasses):
     imgArray = np.array(imgArr/1000).astype(int)
-    output = np.zeros((numOfClasses,imgArr.shape[0],imgArr.shape[1]))
-    return imgArray
-    
+    output = np.zeros((numOfClasses,imgArray.shape[0],imgArray.shape[1]))
+    for i in range(numOfClasses):
+        output[i][imgArray - indexMap.get(i)[0] == 0] = 1
+    return output
+
 
 
 
