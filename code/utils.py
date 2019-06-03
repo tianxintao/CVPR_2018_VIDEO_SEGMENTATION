@@ -71,7 +71,6 @@ def ResizeImage(imgArr, height = 1024, width = 1024):
     ratio = width/max(originalWidth,originalHeight)
     imgArr = resize(imgArr,(round(ratio*originalHeight),round(ratio*originalWidth)),preserve_range = True)
     h,w = imgArr.shape[:2]
-    print(height,width)
     max_dim = max(height,width)
     top_pad = (max_dim - h) // 2
     bottom_pad = max_dim - h - top_pad
@@ -80,7 +79,7 @@ def ResizeImage(imgArr, height = 1024, width = 1024):
     padding = [(top_pad, bottom_pad), (left_pad, right_pad), (0, 0)]
     imgArr = np.pad(imgArr, padding, mode='constant', constant_values=0)
     window = (top_pad, left_pad, h + top_pad, w + left_pad)
-    return imgArr.astype('uint8'),ratio,window,padding
+    return imgArr,ratio,window,padding
 
 def ResizeMaskPiece(mask, scale, padding):
     mask = scipy.ndimage.zoom(mask, zoom=[scale, scale], order=0)

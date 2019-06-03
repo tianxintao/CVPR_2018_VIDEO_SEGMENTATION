@@ -1,9 +1,10 @@
-from utils import ConvertLabelImage
+from utils import ConvertLabelImage,Resize
 import torch
 from torch.utils import data
 import os
 from skimage.io import imread,imshow,show
 import numpy as np
+import matplotlib.pyplot as plt
 
 class VideoSegmentationDataset(data.Dataset):
     """Face Landmarks dataset."""
@@ -31,8 +32,8 @@ class VideoSegmentationDataset(data.Dataset):
         img_label = img_name = os.path.join(self.label_dir,
                                 self.labels[index])
         label = imread(img_label)
-        convertedLabel = ConvertLabelImage(label)
-        sample = {'image': image, 'label': convertedLabel}
+        resizedImg,resizedLabel = Resize(image,label)
+        sample = {'image': torch.tensor(resizedImg,dtype=torch.float), 'label': torch.tensor(resizedLabel,dtype=torch.float)}
 
         return sample
     
