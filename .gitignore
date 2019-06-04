@@ -4,6 +4,8 @@
 # ignore the huge training folder
 train_color/
 train_label/
+train_label_sample/
+train_color_sample/
 
 # ignore the large training folder
 test/

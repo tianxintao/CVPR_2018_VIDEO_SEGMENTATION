@@ -4,21 +4,32 @@ import torchvision
 import torchvision.transforms as transforms
 from torchsummary import summary
 from dataloader import VideoSegmentationDataset
-import os
+import torch.nn.functional as F
+
 
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 #device = torch.device('cpu')
 #torch.cuda.empty_cache() 
 # Hyper parameters
-num_epochs = 5
+num_epochs = 10
 num_classes = 35
 batch_size = 2
-learning_rate = 0.003
+learning_rate = 0.005
+
+def CustomSoftmaxLoss(data,label):
+    loss = 0
+    labelMarginLoss = nn.L1Loss()
+    for i in range(batch_size):        
+        softmax = F.softmax(data[i],dim=0)
+#        print(softmax.shape,label[i].shape)
+        loss = loss+labelMarginLoss(softmax,label[i])
+    return loss
+
 
 ## MNIST dataset
-sampledTrainFolderPath = './drive/My Drive/train_color_sample/'
-sampledLabelFolderPath = './drive/My Drive/train_label_sample/'
+sampledTrainFolderPath = '../train_color_sample/'
+sampledLabelFolderPath = '../train_label_sample/'
 
 train_dataset = VideoSegmentationDataset(sampledTrainFolderPath,
                                 sampledLabelFolderPath)
@@ -108,7 +119,7 @@ model = FCN().to(device)
 # print(summary(model,(3,1024,1024)))
 
 # Loss and optimizer
-criterion = nn.BCEWithLogitsLoss()
+#criterion = nn.L1Loss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 # Train the model
@@ -126,7 +137,7 @@ for epoch in range(num_epochs):
         outputs = model(images)
         print(outputs.size())
         print(labels.size())
-        loss = criterion(outputs, labels)
+        loss = CustomSoftmaxLoss(outputs, labels)
         
         # Backward and optimize
         optimizer.zero_grad()
@@ -136,7 +147,26 @@ for epoch in range(num_epochs):
 #         if (i+1) % 100 == 0:
         print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                    .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
+                   
 
+
+
+
+for i, data in enumerate(train_loader):
+    if i == 0:
+        images = data['image']
+        labels = data['label']
+        print(images.type)
+        images = images.to(device)
+        labels = labels.to(device)
+        
+        
+        # Forward pass
+        outputs = model(images)
+        break
+        
+
+           
 ## Test the model
 #model.eval()  # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
 #with torch.no_grad():
@@ -153,5 +183,8 @@ for epoch in range(num_epochs):
 #    print('Test Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
 #
 ## Save the model checkpoint
-#torch.save(model.state_dict(), 'model.ckpt')# -*- coding: utf-8 -*-
+torch.save(model.state_dict(), 'model.ckpt')# -*- coding: utf-8 -*-
+
+model = FCN().to(device)
+model.load_state_dict(torch.load('model.ckpt'))
 
