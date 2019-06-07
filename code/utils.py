@@ -5,6 +5,7 @@ import os
 from matplotlib import pyplot as plt
 from skimage.transform import resize
 import scipy
+import torch 
 
 
 def CreateIndexMap():
@@ -96,6 +97,21 @@ def Resize(imgArr,labelArr, height = 1024, width = 1024):
         resizedMask[i] = ResizeMaskPiece(labelMask[i],scale,padding)
         
     return resizedImg,resizedMask
+
+
+
+# Convert the (35,`1024,1024) output to a (1024,1024) mask
+def ConvertOutputToMask(numOfClasses,output):
+    indexMap = CreateIndexMap()
+    maxIndicies = torch.argmax(output,dim = 0)
+    print(maxIndicies)
+    numOfRows,numOfColumns = maxIndicies.shape
+    for row in range(numOfRows):
+        for col in range(numOfColumns):    
+            maxIndicies[row][col] = indexMap[maxIndicies[row][col].item()][0]*1000
+#            maxIndicies[row][col] = 0
+    
+    return maxIndicies
     
     
     

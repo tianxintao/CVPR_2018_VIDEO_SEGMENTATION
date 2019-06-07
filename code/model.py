@@ -5,16 +5,18 @@ import torchvision.transforms as transforms
 from torchsummary import summary
 from dataloader import VideoSegmentationDataset
 import torch.nn.functional as F
+from utils import ConvertOutputToMask
+from skimage.io import imread,imshow,show
 
 
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 #device = torch.device('cpu')
-#torch.cuda.empty_cache() 
+torch.cuda.empty_cache() 
 # Hyper parameters
 num_epochs = 10
 num_classes = 35
-batch_size = 2
+batch_size = 1
 learning_rate = 0.005
 
 def CustomSoftmaxLoss(data,label):
@@ -159,12 +161,16 @@ for i, data in enumerate(train_loader):
         print(images.type)
         images = images.to(device)
         labels = labels.to(device)
-        
+        label = ConvertOutputToMask(35,labels[0])
+        imshow(label.cpu().numpy())
         
         # Forward pass
         outputs = model(images)
+        mask = ConvertOutputToMask(35,outputs[0])
+        imshow(mask.cpu().numpy())      
         break
-        
+
+  
 
            
 ## Test the model
