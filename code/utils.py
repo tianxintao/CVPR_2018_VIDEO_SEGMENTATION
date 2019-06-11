@@ -49,12 +49,15 @@ def CreateIndexMap():
     indexMap = dict()
     index = 0
     for key,value in labelmap.items():
-        indexMap[index] = key
+        indexMap[key] = index
         index = index+1
         
     numOfClasses = str(len(labelmap))
 #    print("The output has " + str(len(labelmap)) + " channels")
     return indexMap
+
+def myfunc(element,indexMap):
+    return indexMap.get(element)
 
 # The output would be a (35,2710,3384) vector
 def ConvertLabelImage(imgArr,indexMap):
@@ -63,7 +66,13 @@ def ConvertLabelImage(imgArr,indexMap):
 #    output = np.zeros((numOfClasses,imgArray.shape[0],imgArray.shape[1]))
 #    for i in range(numOfClasses):
 #        output[i][imgArray - indexMap.get(i)[0] == 0] = 1
-    imgArray = [list(indexMap.keys())[list(indexMap.values()).index(element)] for element in np.nditer(imgArray)]
+    shape = imgArray.shape
+#    imgArray = np.reshape([(indexMap.get(element)) for element in np.nditer(imgArray)],shape)
+#    for row in imgArray.shape[0]:
+#        for col in imgArray.shape[1]:
+#            imgArray[row][col] = indexMap.get(imgArray[row][col])
+    vfunc = np.vectorize(myfunc)
+    imgArray = vfunc(imgArray,indexMap)
     return imgArray
 
 
@@ -92,7 +101,7 @@ def Resize(imgArr,labelArr, height = 1024, width = 1024):
     indexMap = CreateIndexMap()
     resizedImg,scale,window,padding = ResizeImage(imgArr)
     labelMask = ConvertLabelImage(labelArr,indexMap)
-    resizedMask = ResizeMaskPiece(labelArr,scale,padding)
+    resizedMask = ResizeMaskPiece(labelMask,scale,padding)
     
 #    for i in range(len(indexMap)):
 #        resizedMask[i] = ResizeMaskPiece(labelMask[i],scale,padding)
@@ -105,12 +114,7 @@ def Resize(imgArr,labelArr, height = 1024, width = 1024):
 def ConvertOutputToMask(numOfClasses,output):
     indexMap = CreateIndexMap()
     maxIndicies = torch.argmax(output,dim = 0)
-    print(maxIndicies)
-    numOfRows,numOfColumns = maxIndicies.shape
-    for row in range(numOfRows):
-        for col in range(numOfColumns):    
-            maxIndicies[row][col] = indexMap[maxIndicies[row][col].item()][0]*1000
-#            maxIndicies[row][col] = 0
+    maxIndicies = maxIndicies * 1000
     
     return maxIndicies
     

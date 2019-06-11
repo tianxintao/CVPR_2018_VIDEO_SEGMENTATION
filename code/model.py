@@ -5,27 +5,28 @@ import torchvision.transforms as transforms
 from torchsummary import summary
 from dataloader import VideoSegmentationDataset
 import torch.nn.functional as F
-from utils import CreateIndexMap()
-
+from utils import CreateIndexMap,ConvertOutputToMask
+from skimage.io import imread,imshow,show
+import numpy as np
 
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 #device = torch.device('cpu')
 #torch.cuda.empty_cache() 
 # Hyper parameters
-num_epochs = 10
+num_epochs = 40
 num_classes = 35
-batch_size = 2
-learning_rate = 0.005
+batch_size = 1
+learning_rate = 0.001
 
-def CustomSoftmaxLoss(data,label):
-    loss = 0
-    labelMarginLoss = nn.L1Loss()
-    for i in range(batch_size):        
-        softmax = F.softmax(data[i],dim=0)
-#        print(softmax.shape,label[i].shape)
-        loss = loss+labelMarginLoss(softmax,label[i])
-    return loss
+#def CustomSoftmaxLoss(data,label):
+#    loss = 0
+#    labelMarginLoss = nn.L1Loss()
+#    for i in range(batch_size):        
+#        softmax = F.softmax(data[i],dim=0)
+##        print(softmax.shape,label[i].shape)
+#        loss = loss+labelMarginLoss(softmax,label[i])
+#    return loss
 
 
 ## MNIST dataset
@@ -131,23 +132,25 @@ for epoch in range(num_epochs):
     for i, data in enumerate(train_loader):
         images = data['image']
         labels = data['label']
-        print(images.type)
+#        print(images.type)
         images = images.to(device)
         labels = labels.to(device)
         
         
         # Forward pass
         outputs = model(images)
-        print(outputs.size())
-        print(labels.size())
-        loss = CustomSoftmaxLoss(outputs, labels)
+#        print(outputs.size())
+#        print(labels.size())
+        
+        loss = criterion(outputs, labels)
+#        print(loss)
         
         # Backward and optimize
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         
-#         if (i+1) % 100 == 0:
+#        if (i+1) % 100 == 0:
         print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                    .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
                    
@@ -156,18 +159,20 @@ for epoch in range(num_epochs):
 
 
 for i, data in enumerate(train_loader):
-    if i == 0:
-        images = data['image']
-        labels = data['label']
-        print(images.type)
-        images = images.to(device)
-        labels = labels.to(device)
-        label = ConvertOutputToMask(35,labels[0])
-        imshow(label.cpu().numpy())
-        
-        # Forward pass
-        outputs = model(images)
-        mask = ConvertOutputToMask(35,outputs[0])
+    images = data['image']
+    labels = data['label']
+    print(images.type)
+    images = images.to(device)
+    labels = labels.to(device)
+#        label = ConvertOutputToMask(35,labels)
+    
+    # Forward pass
+    outputs = model(images)
+    print(outputs.shape)
+    print((outputs[0].cpu().detach().numpy()))
+    mask = ConvertOutputToMask(35,outputs[0])
+    if len(np.unique(mask.cpu().numpy())) > 1:
+        imshow(labels[0].cpu().numpy()*1000)
         imshow(mask.cpu().numpy())      
         break
 
