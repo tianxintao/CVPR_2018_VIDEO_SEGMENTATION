@@ -5,6 +5,7 @@ import os
 from matplotlib import pyplot as plt
 from skimage.transform import resize
 import scipy
+import torch 
 
 
 def CreateIndexMap():
@@ -48,7 +49,7 @@ def CreateIndexMap():
     indexMap = dict()
     index = 0
     for key,value in labelmap.items():
-        indexMap[index] = (key,value)
+        indexMap[index] = key
         index = index+1
         
     numOfClasses = str(len(labelmap))
@@ -59,10 +60,11 @@ def CreateIndexMap():
 def ConvertLabelImage(imgArr,indexMap):
     numOfClasses = len(indexMap)
     imgArray = np.array(imgArr/1000).astype(int)
-    output = np.zeros((numOfClasses,imgArray.shape[0],imgArray.shape[1]))
-    for i in range(numOfClasses):
-        output[i][imgArray - indexMap.get(i)[0] == 0] = 1
-    return output
+#    output = np.zeros((numOfClasses,imgArray.shape[0],imgArray.shape[1]))
+#    for i in range(numOfClasses):
+#        output[i][imgArray - indexMap.get(i)[0] == 0] = 1
+    imgArray = [list(indexMap.keys())[list(indexMap.values()).index(element)] for element in np.nditer(imgArray)]
+    return imgArray
 
 
 def ResizeImage(imgArr, height = 1024, width = 1024):
@@ -90,12 +92,27 @@ def Resize(imgArr,labelArr, height = 1024, width = 1024):
     indexMap = CreateIndexMap()
     resizedImg,scale,window,padding = ResizeImage(imgArr)
     labelMask = ConvertLabelImage(labelArr,indexMap)
-    resizedMask = np.zeros((len(indexMap),height,width))
+    resizedMask = ResizeMaskPiece(labelArr,scale,padding)
     
-    for i in range(len(indexMap)):
-        resizedMask[i] = ResizeMaskPiece(labelMask[i],scale,padding)
-        
-    return resizedImg,resizedMask
+#    for i in range(len(indexMap)):
+#        resizedMask[i] = ResizeMaskPiece(labelMask[i],scale,padding)
+#        
+    return resizedImg,resizedMask.astype(int)
+
+
+
+# Convert the (35,`1024,1024) output to a (1024,1024) mask
+def ConvertOutputToMask(numOfClasses,output):
+    indexMap = CreateIndexMap()
+    maxIndicies = torch.argmax(output,dim = 0)
+    print(maxIndicies)
+    numOfRows,numOfColumns = maxIndicies.shape
+    for row in range(numOfRows):
+        for col in range(numOfColumns):    
+            maxIndicies[row][col] = indexMap[maxIndicies[row][col].item()][0]*1000
+#            maxIndicies[row][col] = 0
+    
+    return maxIndicies
     
     
     

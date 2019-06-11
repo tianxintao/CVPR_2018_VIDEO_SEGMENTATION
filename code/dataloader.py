@@ -33,7 +33,7 @@ class VideoSegmentationDataset(data.Dataset):
                                 self.labels[index])
         label = imread(img_label)
         resizedImg,resizedLabel = Resize(image,label)
-        sample = {'image': torch.tensor(resizedImg,dtype=torch.float), 'label': torch.tensor(resizedLabel,dtype=torch.float)}
+        sample = {'image': torch.tensor(resizedImg,dtype=torch.float), 'label': torch.tensor(resizedLabel,dtype=torch.long)}
 
         return sample
     

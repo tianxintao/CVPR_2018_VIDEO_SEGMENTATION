@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 from torchsummary import summary
 from dataloader import VideoSegmentationDataset
 import torch.nn.functional as F
+from utils import CreateIndexMap()
 
 
 # Device configuration
@@ -53,6 +54,8 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
 class FCN(nn.Module):
     def __init__(self, num_classes=35):
         super(FCN, self).__init__()
+        
+        self.indexMap = CreateIndexMap()
         
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 24, kernel_size=3, stride=1, padding=1),
@@ -119,7 +122,7 @@ model = FCN().to(device)
 # print(summary(model,(3,1024,1024)))
 
 # Loss and optimizer
-#criterion = nn.L1Loss()
+criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 # Train the model
@@ -159,12 +162,15 @@ for i, data in enumerate(train_loader):
         print(images.type)
         images = images.to(device)
         labels = labels.to(device)
-        
+        label = ConvertOutputToMask(35,labels[0])
+        imshow(label.cpu().numpy())
         
         # Forward pass
         outputs = model(images)
+        mask = ConvertOutputToMask(35,outputs[0])
+        imshow(mask.cpu().numpy())      
         break
-        
+
 
            
 ## Test the model
