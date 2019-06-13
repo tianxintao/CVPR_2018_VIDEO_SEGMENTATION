@@ -8,11 +8,14 @@ import torch.nn.functional as F
 from utils import CreateIndexMap,ConvertOutputToMask
 from skimage.io import imread,imshow,show
 import numpy as np
+from torchvision import models
+from torchvision import transforms
 
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+model = models.vgg11(pretrained=True).to(device)
 #device = torch.device('cpu')
-#torch.cuda.empty_cache() 
+torch.cuda.empty_cache() 
 # Hyper parameters
 num_epochs = 40
 num_classes = 35
@@ -118,6 +121,18 @@ class FCN(nn.Module):
         out = self.score_fr(out)
         out = self.upsampling(out)
         return out
+    
+class VGG16FCN(nn.module):
+    def __init__(self, num_classes=35):
+        super(VGG16FCN, self).__init__()
+        self.vgg = models.vgg11(pretrained=True).features
+    
+    def forward(self,x):
+        out = self.vgg(x.view(-1,3,1024,1024))
+        return out
+
+        
+    
 
 model = FCN().to(device)
 # print(summary(model,(3,1024,1024)))
@@ -197,5 +212,70 @@ for i, data in enumerate(train_loader):
 torch.save(model.state_dict(), 'model.ckpt')# -*- coding: utf-8 -*-
 
 model = FCN().to(device)
-model.load_state_dict(torch.load('model.ckpt'))
+model.load_state_dict(torch.load('model_pretrained.ckpt'))
+
+
+
+class VGG16FCN(nn.Module):
+    def __init__(self, num_classes=35):
+        super(VGG16FCN, self).__init__()
+        
+        self.vgg16_features = models.vgg16(pretrained=True).features
+        
+        self.score_fr = nn.Sequential(
+                nn.Conv2d(512,35,kernel_size=1,padding=0))
+        
+        self.upsampling = nn.Sequential(
+                nn.ConvTranspose2d(35,35,kernel_size=32,stride=32))
+        
+        self.DisableGradient()
+    
+    def forward(self,x):
+        out = self.vgg16_features(x.view(-1,3,1024,1024))
+        out = self.score_fr(out)
+        out = self.upsampling(out)
+        return out
+    
+    def DisableGradient(self):
+      for param in self.vgg16_features.parameters():
+        param.requires_grad = False
+        
+        
+model_pretrained = VGG16FCN().to(device)
+#model_pretrained.load_state_dict(torch.load('model_pretrained.ckpt'))
+
+# Loss and optimizer
+
+parameterToBeTrained = []
+
+for param in model_pretrained.parameters():
+  if (param.requires_grad):
+    parameterToBeTrained.append(param)
+
+    
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(parameterToBeTrained, lr=learning_rate)
+
+
+
+
+
+
+from skimage.io import imread,imshow,show
+
+for i, data in enumerate(train_loader):
+    images = data['image']
+    labels = data['label']
+    images = images.to(device)
+    labels = labels.to(device)
+#        label = ConvertOutputToMask(35,labels)
+    
+    # Forward pass
+    outputs = model_pretrained(images)
+    mask = ConvertOutputToMask(35,outputs[0])
+    if len(np.unique(mask.cpu().numpy())) > 0:
+        label = labels[0].cpu().numpy()*1000
+        mask = mask.cpu().numpy()      
+        break
+
 

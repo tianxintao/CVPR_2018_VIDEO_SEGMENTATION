@@ -1,5 +1,5 @@
 from PIL import Image
-from skimage.io import imread,imshow,show
+from skimage.io import imread,imshow,show,imsave
 import numpy as np
 import os
 from matplotlib import pyplot as plt
@@ -117,6 +117,7 @@ def ConvertOutputToMask(numOfClasses,output):
     maxIndicies = maxIndicies * 1000
     
     return maxIndicies
+
     
     
     
@@ -132,18 +133,24 @@ if __name__ == '__main__':
     
     trainPic = imread(sampledTrainFolderPath+train_images[0]) 
     labelPic = imread(sampledLabelFolderPath+train_labels[0])
-    imgHeight = labelPic.shape[0]
-    imgWidth = labelPic.shape[1]
-    
-    imshow(trainPic)
-    show()
-    imshow(labelPic)
-    show()
+#    imgHeight = labelPic.shape[0]
+#    imgWidth = labelPic.shape[1]
+#    
+#    imshow(trainPic)
+#    show()
+#    imshow(labelPic)
+#    show()
     
 #    newPic,scale,window,padding = ResizeImage(trainPic)
 #    mask = ResizeMask(ConvertLabelImage(labelPic,indexMap),scale,padding)
 #    imshow(np.round(newPic))
 #    imshow(mask)
-    resizedImg,resizedMask = Resize(trainPic,labelPic)
+#    for index in range(len(train_images)):
+#        trainPic = imread(sampledTrainFolderPath+train_images[index]) 
+#        labelPic = imread(sampledLabelFolderPath+train_labels[index])
+#        print(trainPic)
+#        resizedImg,resizedMask = Resize(trainPic,labelPic)
+#        imsave(sampledTrainFolderPath+train_images[index],resizedImg)
+#        imsave(sampledTrainFolderPath+train_labels[index],resizedMask)
 
 

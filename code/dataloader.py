@@ -29,7 +29,7 @@ class VideoSegmentationDataset(data.Dataset):
         img_name = os.path.join(self.train_dir,
                                 self.images[index])
         image = imread(img_name)
-        img_label = img_name = os.path.join(self.label_dir,
+        img_label = os.path.join(self.label_dir,
                                 self.labels[index])
         label = imread(img_label)
         resizedImg,resizedLabel = Resize(image,label)
@@ -44,7 +44,6 @@ if __name__ == '__main__':
     dataset = VideoSegmentationDataset(sampledTrainFolderPath,
                                     sampledLabelFolderPath)
 
-    fig = plt.figure()
     
     for i in range(len(dataset)):
         sample = dataset[i]
